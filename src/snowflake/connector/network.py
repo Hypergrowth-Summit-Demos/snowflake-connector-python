@@ -491,20 +491,21 @@ class SnowflakeRestful:
             HTTP_HEADER_ACCEPT: accept_type,
             HTTP_HEADER_USER_AGENT: PYTHON_CONNECTOR_USER_AGENT,
         }
-        try:
-            # SNOW-1763555: inject OpenTelemetry headers if available specifically in WC3 format
-            #  into our request headers in case tracing is enabled. This should make sure that
-            #  our requests are accounted for properly if OpenTelemetry is used by users.
-            from opentelemetry.trace.propagation.tracecontext import (
-                TraceContextTextMapPropagator,
-            )
+        if self._connection and self._connection.telemetry_enabled:
+            try:
+                # SNOW-1763555: inject OpenTelemetry headers if available specifically in WC3 format
+                #  into our request headers in case tracing is enabled. This should make sure that
+                #  our requests are accounted for properly if OpenTelemetry is used by users.
+                from opentelemetry.trace.propagation.tracecontext import (
+                    TraceContextTextMapPropagator,
+                )
 
-            TraceContextTextMapPropagator().inject(headers)
-        except Exception:
-            logger.debug(
-                "Opentelemtry otel injection failed",
-                exc_info=True,
-            )
+                TraceContextTextMapPropagator().inject(headers)
+            except Exception:
+                logger.debug(
+                    "Opentelemtry otel injection failed",
+                    exc_info=True,
+                )
         if self._connection.service_name:
             headers[HTTP_HEADER_SERVICE_NAME] = self._connection.service_name
         if method == "post":
